@@ -53,5 +53,5 @@ Input Text → Preprocessing → Chunking → Summarization → Generation → C
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ai-study-notes-generator.git
+git clone https://github.com/YlliDr/ai-study-notes-generator.git
 cd ai-study-notes-generator
