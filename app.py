@@ -73,7 +73,6 @@ with st.sidebar:
     st.markdown("---")
     st.info("Use at least 150 words for better results.")
 
-
 # --------------------------------------------------
 # Theme Colors
 # --------------------------------------------------
@@ -81,28 +80,28 @@ if st.session_state.theme_mode == "Dark":
     BG = "#0E1117"
     CARD = "#161B22"
     CARD_2 = "#1F2630"
-    TEXT = "#F2F4F8"
-    MUTED = "#A7B0BE"
+    TEXT = "#F8FAFC"
+    MUTED = "#CBD5E1"
     BORDER = "#30363D"
     INPUT_BG = "#FFFFFF"
     INPUT_TEXT = "#111827"
-    ACCENT = "#4F8EF7"
-    SUCCESS_BG = "#123524"
-    WARNING_BG = "#3A2E12"
-    ERROR_BG = "#3A1616"
+    ACCENT = "#60A5FA"
+    BUTTON_TEXT = "#FFFFFF"
+    TAB_BG = "#161B22"
+    METRIC_BG = "#161B22"
 else:
-    BG = "#F6F8FB"
+    BG = "#F8FAFC"
     CARD = "#FFFFFF"
     CARD_2 = "#F1F5F9"
-    TEXT = "#111827"
-    MUTED = "#4B5563"
-    BORDER = "#E5E7EB"
+    TEXT = "#0F172A"
+    MUTED = "#475569"
+    BORDER = "#CBD5E1"
     INPUT_BG = "#FFFFFF"
-    INPUT_TEXT = "#111827"
+    INPUT_TEXT = "#0F172A"
     ACCENT = "#2563EB"
-    SUCCESS_BG = "#DCFCE7"
-    WARNING_BG = "#FEF3C7"
-    ERROR_BG = "#FEE2E2"
+    BUTTON_TEXT = "#FFFFFF"
+    TAB_BG = "#FFFFFF"
+    METRIC_BG = "#FFFFFF"
 
 
 # --------------------------------------------------
@@ -111,79 +110,88 @@ else:
 st.markdown(
     f"""
     <style>
-        /* Whole app */
+        /* App background */
         .stApp {{
-            background-color: {BG};
+            background: {BG};
             color: {TEXT};
         }}
 
-        /* Main text */
-        h1, h2, h3, h4, h5, h6, p, span, div, label {{
+        /* Main block */
+        .block-container {{
+            padding-top: 2rem;
+            padding-bottom: 2rem;
             color: {TEXT};
+        }}
+
+        /* Global text fix */
+        h1, h2, h3, h4, h5, h6,
+        p, span, div, label, small {{
+            color: {TEXT} !important;
         }}
 
         /* Sidebar */
         section[data-testid="stSidebar"] {{
-            background-color: {CARD};
+            background-color: {CARD} !important;
             border-right: 1px solid {BORDER};
         }}
 
         section[data-testid="stSidebar"] * {{
-            color: {TEXT};
+            color: {TEXT} !important;
         }}
 
-        /* Title */
+        /* Header */
         .main-title {{
             font-size: 44px;
             font-weight: 900;
-            color: {TEXT};
+            color: {TEXT} !important;
             margin-bottom: 0px;
             line-height: 1.1;
         }}
 
         .subtitle {{
             font-size: 18px;
-            color: {MUTED};
+            color: {MUTED} !important;
             margin-top: 8px;
             margin-bottom: 28px;
         }}
 
-        /* Cards */
+        /* Custom cards */
         .custom-card {{
             background-color: {CARD};
-            color: {TEXT};
-            padding: 22px;
+            color: {TEXT} !important;
+            padding: 24px;
             border-radius: 18px;
             border: 1px solid {BORDER};
-            box-shadow: 0 8px 22px rgba(0,0,0,0.15);
+            box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
             margin-bottom: 18px;
             line-height: 1.7;
             font-size: 16px;
         }}
 
         .custom-card * {{
-            color: {TEXT};
+            color: {TEXT} !important;
         }}
 
         .mini-card {{
             background-color: {CARD_2};
-            color: {TEXT};
+            color: {TEXT} !important;
             padding: 18px;
             border-radius: 16px;
             border: 1px solid {BORDER};
             margin-bottom: 14px;
+            line-height: 1.6;
         }}
 
         .mini-card * {{
-            color: {TEXT};
+            color: {TEXT} !important;
         }}
 
         .muted {{
-            color: {MUTED};
+            color: {MUTED} !important;
             font-size: 14px;
         }}
 
-        /* Text area fix */
+        /* Text area */
         textarea {{
             background-color: {INPUT_BG} !important;
             color: {INPUT_TEXT} !important;
@@ -191,64 +199,160 @@ st.markdown(
             border: 1px solid {BORDER} !important;
             font-size: 16px !important;
             line-height: 1.6 !important;
+            box-shadow: none !important;
+        }}
+
+        textarea:focus {{
+            border: 2px solid {ACCENT} !important;
+            box-shadow: 0 0 0 1px {ACCENT} !important;
         }}
 
         textarea::placeholder {{
-            color: #6B7280 !important;
+            color: #64748B !important;
         }}
 
-        /* Input labels */
+        /* Text input wrapper */
+        div[data-testid="stTextArea"] {{
+            color: {TEXT} !important;
+        }}
+
         div[data-testid="stTextArea"] label {{
             color: {TEXT} !important;
-            font-weight: 600;
+            font-weight: 700;
         }}
 
         /* Buttons */
         .stButton > button {{
-            border-radius: 12px;
-            height: 46px;
-            font-weight: 700;
-            border: 1px solid {BORDER};
-        }}
-
-        .stDownloadButton > button {{
-            border-radius: 12px;
-            height: 46px;
-            font-weight: 700;
-            border: 1px solid {BORDER};
-        }}
-
-        /* Tabs */
-        button[data-baseweb="tab"] {{
+            border-radius: 12px !important;
+            height: 46px !important;
+            font-weight: 800 !important;
+            border: 1px solid {BORDER} !important;
+            background-color: {CARD_2} !important;
             color: {TEXT} !important;
-            font-weight: 700;
         }}
 
-        div[data-baseweb="tab-panel"] {{
-            background-color: transparent;
+        .stButton > button:hover {{
+            border-color: {ACCENT} !important;
+            color: {ACCENT} !important;
+        }}
+
+        .stButton > button[kind="primary"] {{
+            background-color: {ACCENT} !important;
+            color: {BUTTON_TEXT} !important;
+            border: 1px solid {ACCENT} !important;
+        }}
+
+        .stButton > button[kind="primary"]:hover {{
+            background-color: {ACCENT} !important;
+            color: {BUTTON_TEXT} !important;
+            opacity: 0.92;
+        }}
+
+        /* Download button */
+        .stDownloadButton > button {{
+            border-radius: 12px !important;
+            height: 46px !important;
+            font-weight: 800 !important;
+            background-color: {ACCENT} !important;
+            color: {BUTTON_TEXT} !important;
+            border: 1px solid {ACCENT} !important;
         }}
 
         /* Metrics */
         div[data-testid="metric-container"] {{
-            background-color: {CARD};
-            border: 1px solid {BORDER};
-            padding: 16px;
-            border-radius: 16px;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+            background-color: {METRIC_BG} !important;
+            border: 1px solid {BORDER} !important;
+            padding: 16px !important;
+            border-radius: 16px !important;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
         }}
 
         div[data-testid="metric-container"] * {{
             color: {TEXT} !important;
         }}
 
+        div[data-testid="metric-container"] label {{
+            color: {MUTED} !important;
+        }}
+
+        /* Tabs */
+        div[data-testid="stTabs"] {{
+            background-color: transparent !important;
+        }}
+
+        button[data-baseweb="tab"] {{
+            background-color: {TAB_BG} !important;
+            color: {TEXT} !important;
+            border-radius: 12px 12px 0 0 !important;
+            border: 1px solid {BORDER} !important;
+            margin-right: 4px !important;
+            font-weight: 800 !important;
+        }}
+
+        button[data-baseweb="tab"][aria-selected="true"] {{
+            color: {ACCENT} !important;
+            border-bottom: 3px solid {ACCENT} !important;
+        }}
+
+        div[data-baseweb="tab-panel"] {{
+            background-color: transparent !important;
+            color: {TEXT} !important;
+            padding-top: 16px;
+        }}
+
+        /* Radio buttons */
+        div[role="radiogroup"] label {{
+            background-color: {CARD_2} !important;
+            border: 1px solid {BORDER} !important;
+            border-radius: 12px !important;
+            padding: 8px 12px !important;
+            margin-bottom: 6px !important;
+        }}
+
+        div[role="radiogroup"] label * {{
+            color: {TEXT} !important;
+        }}
+
         /* Alerts */
         div[data-testid="stAlert"] {{
-            border-radius: 14px;
+            border-radius: 14px !important;
+            border: 1px solid {BORDER} !important;
+            color: {TEXT} !important;
+        }}
+
+        div[data-testid="stAlert"] * {{
+            color: {TEXT} !important;
+        }}
+
+        /* Progress bar */
+        div[data-testid="stProgress"] > div > div > div {{
+            background-color: {ACCENT} !important;
+        }}
+
+        /* Horizontal line */
+        hr {{
+            border-color: {BORDER} !important;
+        }}
+
+        /* Markdown lists */
+        ul, ol, li {{
+            color: {TEXT} !important;
+        }}
+
+        li {{
+            margin-bottom: 8px;
+        }}
+
+        /* Code/pre text */
+        pre, code {{
+            background-color: {CARD_2} !important;
+            color: {TEXT} !important;
+            border-radius: 10px !important;
         }}
 
         /* Footer */
         .footer {{
-            color: {MUTED};
+            color: {MUTED} !important;
             text-align: center;
             font-size: 14px;
             padding-top: 24px;
@@ -256,22 +360,13 @@ st.markdown(
             border-top: 1px solid {BORDER};
         }}
 
-        /* Expander */
-        details {{
-            background-color: {CARD};
-            border: 1px solid {BORDER};
-            border-radius: 14px;
-            padding: 8px;
-        }}
-
-        details * {{
-            color: {TEXT};
+        .footer * {{
+            color: {MUTED} !important;
         }}
     </style>
     """,
     unsafe_allow_html=True
 )
-
 
 # --------------------------------------------------
 # Header
