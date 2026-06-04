@@ -1,5 +1,7 @@
+import re
 import streamlit as st
 from transformers import pipeline
+
 
 @st.cache_resource
 def load_text_generator():
@@ -10,68 +12,59 @@ def load_text_generator():
 
 
 def clean_model_output(text: str) -> str:
-    """
-    Cleans weak model outputs.
-    """
     if not text:
         return ""
 
     text = text.strip()
-    text = re.sub(r"\s+", " ", text)
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n\s*\n+", "\n", text)
 
-    bad_outputs = ["iii .", "iii.", ".", "-", "none", "n/a"]
+    bad_outputs = ["iii .", "iii.", ".", "-", "none", "n/a", "null"]
 
-    if text.lower() in bad_outputs or len(text.split()) < 5:
+    if text.lower().strip() in bad_outputs or len(text.split()) < 5:
         return ""
 
     return text
 
 
 def split_into_sentences(text: str) -> list[str]:
-    """
-    Simple sentence splitter.
-    """
-    sentences = re.split(r"(?<=[.!?])\s+", text)
+    if not text:
+        return []
+
+    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
     return [s.strip() for s in sentences if len(s.strip().split()) >= 6]
 
 
 def fallback_key_points(text: str) -> str:
-    """
-    Rule-based fallback if model output is bad.
-    """
     sentences = split_into_sentences(text)
 
     if not sentences:
         return "- The text contains important study information."
 
-    selected = sentences[:5]
-
-    return "\n".join([f"- {sentence}" for sentence in selected])
+    return "\n".join(f"- {sentence}" for sentence in sentences[:5])
 
 
 def fallback_flashcards(text: str) -> str:
-    """
-    Rule-based flashcard fallback.
-    """
     sentences = split_into_sentences(text)
 
     if not sentences:
-        return "Q: What is the main idea of the text?\nA: The text explains an important topic for study."
+        return (
+            "Q1: What is the main idea of the text?\n"
+            "A1: The text explains an important topic for study."
+        )
 
     flashcards = []
 
     for i, sentence in enumerate(sentences[:5], start=1):
         flashcards.append(
-            f"Q{i}: What is one important idea from the text?\nA{i}: {sentence}"
+            f"Q{i}: What is one important idea from the text?\n"
+            f"A{i}: {sentence}"
         )
 
     return "\n\n".join(flashcards)
 
 
 def fallback_quiz(text: str) -> str:
-    """
-    Rule-based quiz fallback.
-    """
     sentences = split_into_sentences(text)
 
     if not sentences:
@@ -99,56 +92,17 @@ def fallback_quiz(text: str) -> str:
     return "\n\n".join(quiz_items)
 
 
-def generate_key_points(text: str) -> str:
-    generator = load_text_generator()
-
-    prompt = f"""
-You are a study assistant.
-
-Task:
-Extract exactly 5 key study points from the text.
-
-Format:
-- key point 1
-- key point 2
-- key point 3
-- key point 4
-- key point 5
-
-Rules:
-- Use only bullet points.
-- Start every point with "- ".
-- Do not write a paragraph.
-- Do not repeat the summary.
-- Each point must be short and clear.
-- Use only information from the text.
-
-Text:
-{text[:2500]}
-"""
-
-    result = generator(
-        prompt,
-        max_new_tokens=250,
-        do_sample=False,
-        num_beams=4
-    )
-
-    output = clean_model_output(result[0]["generated_text"])
-
-    if not output:
-        return fallback_key_points(text)
-
-    return format_as_bullets(output)
-
 def format_as_bullets(text: str) -> str:
-    """
-    Converts model output into clean markdown bullet points.
-    """
     if not text:
         return "- No key points generated."
 
-    lines = text.replace("•", "-").split("\n")
+    text = text.replace("•", "-")
+
+    # Add line breaks before bullet-like patterns if model returns one long line
+    text = re.sub(r"\s*-\s+", "\n- ", text)
+    text = re.sub(r"\s*(\d+[\.\)])\s+", r"\n\1 ", text)
+
+    lines = text.splitlines()
     bullets = []
 
     for line in lines:
@@ -157,17 +111,13 @@ def format_as_bullets(text: str) -> str:
         if not line:
             continue
 
-        # Remove numbering like 1. or 1)
         line = re.sub(r"^\d+[\.\)]\s*", "", line)
-
-        # Remove existing messy dash spacing
         line = line.lstrip("-").strip()
 
-        if line:
+        if len(line.split()) >= 3:
             bullets.append(f"- {line}")
 
-    # If model returned everything in one line, split by semicolon or periods
-    if len(bullets) <= 1:
+    if len(bullets) < 3:
         parts = re.split(r";|\.\s+", text)
         bullets = []
 
@@ -179,7 +129,59 @@ def format_as_bullets(text: str) -> str:
             if len(part.split()) >= 4:
                 bullets.append(f"- {part}")
 
+    if not bullets:
+        return "- No key points generated."
+
     return "\n".join(bullets[:5])
+
+
+def generate_key_points(text: str) -> str:
+    generator = load_text_generator()
+
+    prompt = f"""
+You are a study assistant.
+
+Extract exactly 5 key study points from the text.
+
+Use this exact format:
+- key point 1
+- key point 2
+- key point 3
+- key point 4
+- key point 5
+
+Rules:
+- Use only bullet points.
+- Each point must start with "- ".
+- Each point must be short and clear.
+- Use only information from the text.
+
+Text:
+{text[:2500]}
+"""
+
+    try:
+        result = generator(
+            prompt,
+            max_new_tokens=250,
+            do_sample=False,
+            num_beams=4
+        )
+
+        output = clean_model_output(result[0]["generated_text"])
+
+        if not output:
+            return fallback_key_points(text)
+
+        formatted = format_as_bullets(output)
+
+        if "No key points generated" in formatted:
+            return fallback_key_points(text)
+
+        return formatted
+
+    except Exception:
+        return fallback_key_points(text)
 
 
 def generate_flashcards(summary: str) -> str:
@@ -188,48 +190,50 @@ def generate_flashcards(summary: str) -> str:
     prompt = f"""
 You are a study assistant.
 
-Task:
 Create exactly 5 flashcards from the text.
 
-Format:
-Q1: ...
-A1: ...
+Use this exact format:
+Q1: question
+A1: answer
 
-Q2: ...
-A2: ...
+Q2: question
+A2: answer
 
-Q3: ...
-A3: ...
+Q3: question
+A3: answer
 
-Q4: ...
-A4: ...
+Q4: question
+A4: answer
 
-Q5: ...
-A5: ...
+Q5: question
+A5: answer
 
 Rules:
 - Questions must be useful for studying.
 - Answers must be based only on the text.
 - Do not write random symbols.
-- Do not answer with only roman numerals.
 
 Text:
-{summary}
+{summary[:2500]}
 """
 
-    result = generator(
-        prompt,
-        max_new_tokens=350,
-        do_sample=False,
-        num_beams=4
-    )
+    try:
+        result = generator(
+            prompt,
+            max_new_tokens=350,
+            do_sample=False,
+            num_beams=4
+        )
 
-    output = clean_model_output(result[0]["generated_text"])
+        output = clean_model_output(result[0]["generated_text"])
 
-    if not output or "Q" not in output or "A" not in output:
+        if not output or "Q" not in output or "A" not in output:
+            return fallback_flashcards(summary)
+
+        return output
+
+    except Exception:
         return fallback_flashcards(summary)
-
-    return output
 
 
 def generate_quiz(summary: str) -> str:
@@ -238,10 +242,9 @@ def generate_quiz(summary: str) -> str:
     prompt = f"""
 You are a study assistant.
 
-Task:
 Create exactly 5 multiple-choice quiz questions from the text.
 
-Format:
+Use this exact format:
 1. Question?
 A) Option
 B) Option
@@ -256,19 +259,23 @@ Rules:
 - Do not write random symbols.
 
 Text:
-{summary}
+{summary[:2500]}
 """
 
-    result = generator(
-        prompt,
-        max_new_tokens=500,
-        do_sample=False,
-        num_beams=4
-    )
+    try:
+        result = generator(
+            prompt,
+            max_new_tokens=500,
+            do_sample=False,
+            num_beams=4
+        )
 
-    output = clean_model_output(result[0]["generated_text"])
+        output = clean_model_output(result[0]["generated_text"])
 
-    if not output or "Correct answer" not in output:
+        if not output or "Correct answer" not in output:
+            return fallback_quiz(summary)
+
+        return output
+
+    except Exception:
         return fallback_quiz(summary)
-
-    return output
