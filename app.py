@@ -21,7 +21,8 @@ Genpact is a global professional services company that helps businesses transfor
 
 One of Genpact’s strongest areas is digital transformation. This means helping companies move from traditional manual processes to smarter, automated systems. For example, a bank may use Genpact’s solutions to improve customer service, analyze financial data, detect fraud, or automate repetitive back-office tasks. By combining human expertise with modern technologies, Genpact supports companies in becoming faster, more accurate, and more competitive.
 
-Genpact also focuses heavily on artificial intelligence and data analytics. These tools allow businesses to understand customer behavior, predict future trends, and solve complex problems. In today’s digital economy, companies need reliable data-driven insights, and Genpact helps turn raw data into useful business knowledge."""
+Genpact also focuses heavily on artificial intelligence and data analytics. These tools allow businesses to understand customer behavior, predict future trends, and solve complex problems. In today’s digital economy, companies need reliable data-driven insights, and Genpact helps turn raw data into useful business knowledge.
+"""
 
 if "text_input" not in st.session_state:
     st.session_state.text_input = sample_text
@@ -50,9 +51,9 @@ with st.sidebar:
     st.markdown("---")
 
     st.subheader("Project Info")
-    st.write("**Method:** Seq2Seq Transformers")
-    st.write("**Models:** DistilBART + FLAN-T5")
-    st.write("**Framework:** Hugging Face + Streamlit")
+    st.write("**Method:** Rule-based NLP")
+    st.write("**Models:** Lightweight text processing")
+    st.write("**Framework:** Python + Streamlit")
 
     st.markdown("---")
 
@@ -67,6 +68,7 @@ with st.sidebar:
 
     st.markdown("---")
     st.info("Use at least 150 words for better results.")
+
 
 # --------------------------------------------------
 # Theme Colors
@@ -105,26 +107,22 @@ else:
 st.markdown(
     f"""
     <style>
-        /* App background */
         .stApp {{
             background: {BG};
             color: {TEXT};
         }}
 
-        /* Main block */
         .block-container {{
             padding-top: 2rem;
             padding-bottom: 2rem;
             color: {TEXT};
         }}
 
-        /* Global text fix */
         h1, h2, h3, h4, h5, h6,
         p, span, div, label, small {{
             color: {TEXT} !important;
         }}
 
-        /* Sidebar */
         section[data-testid="stSidebar"] {{
             background-color: {CARD} !important;
             border-right: 1px solid {BORDER};
@@ -134,7 +132,6 @@ st.markdown(
             color: {TEXT} !important;
         }}
 
-        /* Header */
         .main-title {{
             font-size: 44px;
             font-weight: 900;
@@ -150,7 +147,6 @@ st.markdown(
             margin-bottom: 28px;
         }}
 
-        /* Custom cards */
         .custom-card {{
             background-color: {CARD};
             color: {TEXT} !important;
@@ -161,6 +157,7 @@ st.markdown(
             margin-bottom: 18px;
             line-height: 1.7;
             font-size: 16px;
+            white-space: pre-wrap;
         }}
 
         .custom-card * {{
@@ -186,7 +183,6 @@ st.markdown(
             font-size: 14px;
         }}
 
-        /* Text area */
         textarea {{
             background-color: {INPUT_BG} !important;
             color: {INPUT_TEXT} !important;
@@ -206,7 +202,6 @@ st.markdown(
             color: #64748B !important;
         }}
 
-        /* Text input wrapper */
         div[data-testid="stTextArea"] {{
             color: {TEXT} !important;
         }}
@@ -216,7 +211,6 @@ st.markdown(
             font-weight: 700;
         }}
 
-        /* Buttons */
         .stButton > button {{
             border-radius: 12px !important;
             height: 46px !important;
@@ -243,7 +237,6 @@ st.markdown(
             opacity: 0.92;
         }}
 
-        /* Download button */
         .stDownloadButton > button {{
             border-radius: 12px !important;
             height: 46px !important;
@@ -253,7 +246,6 @@ st.markdown(
             border: 1px solid {ACCENT} !important;
         }}
 
-        /* Metrics */
         div[data-testid="metric-container"] {{
             background-color: {METRIC_BG} !important;
             border: 1px solid {BORDER} !important;
@@ -268,11 +260,6 @@ st.markdown(
 
         div[data-testid="metric-container"] label {{
             color: {MUTED} !important;
-        }}
-
-        /* Tabs */
-        div[data-testid="stTabs"] {{
-            background-color: transparent !important;
         }}
 
         button[data-baseweb="tab"] {{
@@ -295,7 +282,6 @@ st.markdown(
             padding-top: 16px;
         }}
 
-        /* Radio buttons */
         div[role="radiogroup"] label {{
             background-color: {CARD_2} !important;
             border: 1px solid {BORDER} !important;
@@ -308,7 +294,6 @@ st.markdown(
             color: {TEXT} !important;
         }}
 
-        /* Alerts */
         div[data-testid="stAlert"] {{
             border-radius: 14px !important;
             border: 1px solid {BORDER} !important;
@@ -319,17 +304,14 @@ st.markdown(
             color: {TEXT} !important;
         }}
 
-        /* Progress bar */
         div[data-testid="stProgress"] > div > div > div {{
             background-color: {ACCENT} !important;
         }}
 
-        /* Horizontal line */
         hr {{
             border-color: {BORDER} !important;
         }}
 
-        /* Markdown lists */
         ul, ol, li {{
             color: {TEXT} !important;
         }}
@@ -338,14 +320,12 @@ st.markdown(
             margin-bottom: 8px;
         }}
 
-        /* Code/pre text */
         pre, code {{
             background-color: {CARD_2} !important;
             color: {TEXT} !important;
             border-radius: 10px !important;
         }}
 
-        /* Footer */
         .footer {{
             color: {MUTED} !important;
             text-align: center;
@@ -362,6 +342,8 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+
 # --------------------------------------------------
 # Header
 # --------------------------------------------------
@@ -375,7 +357,7 @@ st.markdown(
 st.markdown(
     """
     <p class="subtitle">
-        Turn long text into summaries, key points, flashcards, and quiz questions using transformer-based NLP models.
+        Turn long text into summaries, key points, flashcards, and quiz questions using lightweight NLP techniques.
     </p>
     """,
     unsafe_allow_html=True
@@ -488,14 +470,15 @@ if generate_button:
 
             status_text.write("Cleaning and splitting text...")
             chunks = split_text(cleaned_text)
+            full_text = " ".join(str(chunk) for chunk in chunks)
             progress_bar.progress(15)
 
             status_text.write("Generating summary...")
-            summary = summarize_text(chunks)
+            summary = summarize_text(full_text)
             progress_bar.progress(40)
 
             status_text.write("Generating key points...")
-            key_points = generate_key_points(cleaned_text)
+            key_points = generate_key_points(full_text)
             progress_bar.progress(60)
 
             status_text.write("Generating flashcards...")
@@ -509,8 +492,8 @@ if generate_button:
             status_text.write("Classifying topic and difficulty...")
 
             try:
-                topic = classify_topic(summary)
-                difficulty = classify_difficulty(summary)
+                topic = classify_topic(full_text)
+                difficulty = classify_difficulty(full_text)
             except Exception:
                 topic = "Educational Text"
                 difficulty = "Intermediate"
@@ -636,7 +619,7 @@ if st.session_state.results:
 st.markdown(
     """
     <div class="footer">
-        Built with Python, Streamlit, Hugging Face Transformers, DistilBART, and FLAN-T5.
+        Built with Python, Streamlit, and lightweight NLP text processing.
     </div>
     """,
     unsafe_allow_html=True

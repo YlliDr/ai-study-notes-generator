@@ -1,16 +1,11 @@
 import re
-import streamlit as st
 
 
 def clean_model_output(text: str) -> str:
-    """
-    Cleans generated text output.
-    Kept for compatibility, even though this version does not use an AI model.
-    """
     if not text:
         return ""
 
-    text = text.strip()
+    text = str(text).strip()
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n\s*\n+", "\n", text)
 
@@ -23,23 +18,20 @@ def clean_model_output(text: str) -> str:
 
 
 def split_into_sentences(text: str) -> list[str]:
-    """
-    Splits text into usable sentences.
-    Very short sentences are ignored.
-    """
     if not text:
         return []
 
+    text = str(text)
+
     sentences = re.split(r"(?<=[.!?])\s+", text.strip())
-    return [s.strip() for s in sentences if len(s.strip().split()) >= 6]
+    return [s.strip() for s in sentences if len(s.strip().split()) >= 5]
 
 
 def extract_keywords(text: str, max_keywords: int = 10) -> list[str]:
-    """
-    Extracts simple keywords from the text without using AI.
-    """
     if not text:
         return []
+
+    text = str(text)
 
     words = re.findall(r"\b[a-zA-Z]{5,}\b", text.lower())
 
@@ -64,9 +56,6 @@ def extract_keywords(text: str, max_keywords: int = 10) -> list[str]:
 
 
 def fallback_key_points(text: str) -> str:
-    """
-    Creates simple key points from the first useful sentences.
-    """
     sentences = split_into_sentences(text)
 
     if not sentences:
@@ -76,9 +65,6 @@ def fallback_key_points(text: str) -> str:
 
 
 def fallback_flashcards(text: str) -> str:
-    """
-    Creates basic flashcards from useful sentences.
-    """
     sentences = split_into_sentences(text)
 
     if not sentences:
@@ -99,9 +85,6 @@ def fallback_flashcards(text: str) -> str:
 
 
 def fallback_quiz(text: str) -> str:
-    """
-    Creates simple multiple-choice questions from useful sentences.
-    """
     sentences = split_into_sentences(text)
 
     if not sentences:
@@ -130,13 +113,10 @@ def fallback_quiz(text: str) -> str:
 
 
 def format_as_bullets(text: str) -> str:
-    """
-    Formats any text as bullet points.
-    """
     if not text:
         return "- No key points generated."
 
-    text = text.replace("•", "-")
+    text = str(text).replace("•", "-")
 
     text = re.sub(r"\s*-\s+", "\n- ", text)
     text = re.sub(r"\s*(\d+[\.\)])\s+", r"\n\1 ", text)
@@ -175,27 +155,15 @@ def format_as_bullets(text: str) -> str:
 
 
 def generate_key_points(text: str) -> str:
-    """
-    Generates 5 key study points without AI model.
-    This is memory-safe for Streamlit Cloud.
-    """
     sentences = split_into_sentences(text)
 
     if not sentences:
         return fallback_key_points(text)
 
-    key_points = []
-
-    for sentence in sentences[:5]:
-        key_points.append(f"- {sentence}")
-
-    return "\n".join(key_points)
+    return "\n".join(f"- {sentence}" for sentence in sentences[:5])
 
 
 def generate_flashcards(summary: str) -> str:
-    """
-    Generates 5 flashcards without AI model.
-    """
     sentences = split_into_sentences(summary)
     keywords = extract_keywords(summary, max_keywords=5)
 
@@ -216,9 +184,6 @@ def generate_flashcards(summary: str) -> str:
 
 
 def generate_quiz(summary: str) -> str:
-    """
-    Generates 5 multiple-choice questions without AI model.
-    """
     sentences = split_into_sentences(summary)
 
     if not sentences:
@@ -231,45 +196,9 @@ def generate_quiz(summary: str) -> str:
             f"{i}. Which statement is supported by the text?\n"
             f"A) {sentence}\n"
             f"B) The text says the opposite of this idea.\n"
-            f"C) The text does not provide any useful information.\n"
+            f"C) The text does not provide useful information.\n"
             f"D) The text is only about unrelated details.\n"
             f"Correct answer: A"
         )
 
     return "\n\n".join(quiz_items)
-
-
-def generate_summary(text: str, max_sentences: int = 5) -> str:
-    """
-    Optional helper function for summary generation.
-    """
-    sentences = split_into_sentences(text)
-
-    if not sentences:
-        return "No summary could be generated from the provided text."
-
-    return " ".join(sentences[:max_sentences])
-
-
-# Streamlit UI
-st.title("AI Study Notes Generator")
-
-text = st.text_area("Paste your lesson text here:", height=250)
-
-if st.button("Generate Study Notes"):
-    if not text.strip():
-        st.warning("Please paste some text first.")
-    else:
-        summary = generate_summary(text)
-
-        st.subheader("Summary")
-        st.write(summary)
-
-        st.subheader("Key Points")
-        st.markdown(generate_key_points(text))
-
-        st.subheader("Flashcards")
-        st.text(generate_flashcards(summary))
-
-        st.subheader("Quiz")
-        st.text(generate_quiz(summary))

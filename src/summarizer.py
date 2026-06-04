@@ -9,14 +9,19 @@ def split_into_sentences(text: str) -> list[str]:
     return [s.strip() for s in sentences if len(s.strip().split()) >= 5]
 
 
-def summarize_text(text: str, max_sentences: int = 5) -> str:
+def summarize_text(text, max_sentences: int = 5) -> str:
     """
     Lightweight summary without transformers.
-    Takes the first useful sentences from the text.
-    Safe for Streamlit Cloud memory limits.
+    Accepts either a string or a list of text chunks.
     """
-    if not text or not text.strip():
+
+    if isinstance(text, list):
+        text = " ".join(str(chunk) for chunk in text)
+
+    if not text or not str(text).strip():
         return "No text provided."
+
+    text = str(text)
 
     sentences = split_into_sentences(text)
 

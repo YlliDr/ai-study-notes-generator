@@ -1,14 +1,30 @@
 import re
 
 
-def clean_words(text: str) -> list[str]:
+def normalize_text(text) -> str:
+    """
+    Converts input into a safe string.
+    Accepts normal text or a list of chunks.
+    """
+    if isinstance(text, list):
+        return " ".join(str(chunk) for chunk in text)
+
+    if text is None:
+        return ""
+
+    return str(text)
+
+
+def clean_words(text) -> list[str]:
+    text = normalize_text(text)
+
     if not text:
         return []
 
     return re.findall(r"\b[a-zA-Z]{4,}\b", text.lower())
 
 
-def classify_topic(text: str) -> str:
+def classify_topic(text) -> str:
     """
     Lightweight topic classifier without AI model.
     Uses simple keyword matching.
@@ -70,11 +86,13 @@ def classify_topic(text: str) -> str:
     return best_topic
 
 
-def classify_difficulty(text: str) -> str:
+def classify_difficulty(text) -> str:
     """
     Lightweight difficulty classifier without AI model.
     Uses sentence length and technical word count.
     """
+
+    text = normalize_text(text)
 
     if not text or not text.strip():
         return "Unknown"
