@@ -9,7 +9,7 @@ MODEL_NAME = "google/flan-t5-small"
 
 
 @st.cache_resource
-def load_generator():
+def load_text_generator():
     return pipeline(
         "text2text-generation",
         model="google/flan-t5-small"
