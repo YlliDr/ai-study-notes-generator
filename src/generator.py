@@ -3,16 +3,16 @@ import streamlit as st
 from transformers import pipeline
 
 
-MODEL_NAME = "google/flan-t5-base"
+MODEL_NAME = "google/flan-t5-small"
 # If your laptop is too slow, change back to:
 # MODEL_NAME = "google/flan-t5-small"
 
 
 @st.cache_resource
-def load_text_generator():
+def load_generator():
     return pipeline(
         "text2text-generation",
-        model=MODEL_NAME
+        model="google/flan-t5-small"
     )
 
 
