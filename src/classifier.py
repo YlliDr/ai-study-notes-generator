@@ -1,41 +1,112 @@
-import streamlit as st
-from transformers import pipeline
+import re
 
 
-@st.cache_resource
-def load_classifier():
-    return pipeline(
-        "zero-shot-classification",
-        model="typeform/distilbert-base-uncased-mnli"
-    )
+def clean_words(text: str) -> list[str]:
+    if not text:
+        return []
+
+    return re.findall(r"\b[a-zA-Z]{4,}\b", text.lower())
 
 
 def classify_topic(text: str) -> str:
-    classifier = load_classifier()
+    """
+    Lightweight topic classifier without AI model.
+    Uses simple keyword matching.
+    """
 
-    labels = [
-        "Artificial Intelligence",
-        "Computer Science",
-        "Business",
-        "Health",
-        "Education",
-        "History",
-        "Science",
-        "Technology"
-    ]
+    words = clean_words(text)
+    joined_text = " ".join(words)
 
-    result = classifier(text[:1000], labels)
-    return result["labels"][0]
+    topic_keywords = {
+        "Computer Science / Programming": [
+            "python", "java", "code", "programming", "function", "class",
+            "object", "algorithm", "database", "sql", "html", "css",
+            "javascript", "software", "application", "streamlit"
+        ],
+        "Artificial Intelligence / Machine Learning": [
+            "machine", "learning", "model", "training", "dataset",
+            "neural", "network", "classification", "regression",
+            "clustering", "prediction", "transformer", "encoder",
+            "decoder", "attention"
+        ],
+        "Business / Management": [
+            "business", "management", "strategy", "company", "market",
+            "customer", "finance", "bank", "performance", "organization"
+        ],
+        "Biology / Medicine": [
+            "cell", "body", "health", "disease", "blood", "virus",
+            "bacteria", "medicine", "treatment", "organ", "protein"
+        ],
+        "History / Society": [
+            "history", "war", "political", "society", "government",
+            "culture", "people", "country", "rights", "law"
+        ],
+        "Mathematics": [
+            "number", "equation", "formula", "variable", "function",
+            "matrix", "probability", "statistics", "calculation"
+        ],
+        "Networking / Cybersecurity": [
+            "network", "server", "client", "packet", "protocol",
+            "ip", "tcp", "udp", "http", "security", "encryption"
+        ],
+    }
+
+    scores = {}
+
+    for topic, keywords in topic_keywords.items():
+        score = 0
+
+        for keyword in keywords:
+            if keyword in joined_text:
+                score += 1
+
+        scores[topic] = score
+
+    best_topic = max(scores, key=scores.get)
+
+    if scores[best_topic] == 0:
+        return "General Study Topic"
+
+    return best_topic
 
 
 def classify_difficulty(text: str) -> str:
-    classifier = load_classifier()
+    """
+    Lightweight difficulty classifier without AI model.
+    Uses sentence length and technical word count.
+    """
 
-    labels = [
-        "Beginner",
-        "Intermediate",
-        "Advanced"
+    if not text or not text.strip():
+        return "Unknown"
+
+    words = clean_words(text)
+
+    if not words:
+        return "Easy"
+
+    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+    sentences = [s for s in sentences if s.strip()]
+
+    average_sentence_length = len(words) / max(len(sentences), 1)
+
+    technical_words = [
+        "algorithm", "architecture", "implementation", "classification",
+        "regression", "optimization", "normalization", "standardization",
+        "infrastructure", "encapsulation", "inheritance", "polymorphism",
+        "database", "encryption", "authentication", "probability",
+        "statistical", "transformer", "attention", "neural"
     ]
 
-    result = classifier(text[:1000], labels)
-    return result["labels"][0]
+    technical_count = 0
+
+    for word in words:
+        if word in technical_words:
+            technical_count += 1
+
+    if average_sentence_length > 22 or technical_count >= 8:
+        return "Hard"
+
+    if average_sentence_length > 14 or technical_count >= 3:
+        return "Medium"
+
+    return "Easy"
