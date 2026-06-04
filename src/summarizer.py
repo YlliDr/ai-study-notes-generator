@@ -2,9 +2,9 @@ from transformers import pipeline
 
 def load_summarizer():
     return pipeline(
-        "text2text-generation",
-        model="sshleifer/distilbart-cnn-12-6"
-    )
+    "summarization",
+    model="sshleifer/distilbart-cnn-12-6"
+)
 
 def summarize_text(chunks: list[str]) -> str:
     summarizer = load_summarizer()
