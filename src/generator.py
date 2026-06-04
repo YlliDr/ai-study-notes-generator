@@ -1,17 +1,12 @@
 import re
 import streamlit as st
-from transformers import pipeline
-
-
-@st.cache_resource
-def load_text_generator():
-    return pipeline(
-        "text2text-generation",
-        model="google/flan-t5-small"
-    )
 
 
 def clean_model_output(text: str) -> str:
+    """
+    Cleans generated text output.
+    Kept for compatibility, even though this version does not use an AI model.
+    """
     if not text:
         return ""
 
@@ -28,6 +23,10 @@ def clean_model_output(text: str) -> str:
 
 
 def split_into_sentences(text: str) -> list[str]:
+    """
+    Splits text into usable sentences.
+    Very short sentences are ignored.
+    """
     if not text:
         return []
 
@@ -35,7 +34,39 @@ def split_into_sentences(text: str) -> list[str]:
     return [s.strip() for s in sentences if len(s.strip().split()) >= 6]
 
 
+def extract_keywords(text: str, max_keywords: int = 10) -> list[str]:
+    """
+    Extracts simple keywords from the text without using AI.
+    """
+    if not text:
+        return []
+
+    words = re.findall(r"\b[a-zA-Z]{5,}\b", text.lower())
+
+    stop_words = {
+        "which", "there", "their", "about", "would", "could", "should",
+        "because", "these", "those", "where", "when", "while", "using",
+        "therefore", "however", "between", "important", "information",
+        "example", "examples", "study", "topic", "text", "based",
+        "answer", "question", "questions", "correct", "option"
+    }
+
+    keywords = []
+
+    for word in words:
+        if word not in stop_words and word not in keywords:
+            keywords.append(word)
+
+        if len(keywords) >= max_keywords:
+            break
+
+    return keywords
+
+
 def fallback_key_points(text: str) -> str:
+    """
+    Creates simple key points from the first useful sentences.
+    """
     sentences = split_into_sentences(text)
 
     if not sentences:
@@ -45,6 +76,9 @@ def fallback_key_points(text: str) -> str:
 
 
 def fallback_flashcards(text: str) -> str:
+    """
+    Creates basic flashcards from useful sentences.
+    """
     sentences = split_into_sentences(text)
 
     if not sentences:
@@ -65,6 +99,9 @@ def fallback_flashcards(text: str) -> str:
 
 
 def fallback_quiz(text: str) -> str:
+    """
+    Creates simple multiple-choice questions from useful sentences.
+    """
     sentences = split_into_sentences(text)
 
     if not sentences:
@@ -93,12 +130,14 @@ def fallback_quiz(text: str) -> str:
 
 
 def format_as_bullets(text: str) -> str:
+    """
+    Formats any text as bullet points.
+    """
     if not text:
         return "- No key points generated."
 
     text = text.replace("•", "-")
 
-    # Add line breaks before bullet-like patterns if model returns one long line
     text = re.sub(r"\s*-\s+", "\n- ", text)
     text = re.sub(r"\s*(\d+[\.\)])\s+", r"\n\1 ", text)
 
@@ -136,146 +175,101 @@ def format_as_bullets(text: str) -> str:
 
 
 def generate_key_points(text: str) -> str:
-    generator = load_text_generator()
+    """
+    Generates 5 key study points without AI model.
+    This is memory-safe for Streamlit Cloud.
+    """
+    sentences = split_into_sentences(text)
 
-    prompt = f"""
-You are a study assistant.
-
-Extract exactly 5 key study points from the text.
-
-Use this exact format:
-- key point 1
-- key point 2
-- key point 3
-- key point 4
-- key point 5
-
-Rules:
-- Use only bullet points.
-- Each point must start with "- ".
-- Each point must be short and clear.
-- Use only information from the text.
-
-Text:
-{text[:2500]}
-"""
-
-    try:
-        result = generator(
-            prompt,
-            max_new_tokens=250,
-            do_sample=False,
-            num_beams=4
-        )
-
-        output = clean_model_output(result[0]["generated_text"])
-
-        if not output:
-            return fallback_key_points(text)
-
-        formatted = format_as_bullets(output)
-
-        if "No key points generated" in formatted:
-            return fallback_key_points(text)
-
-        return formatted
-
-    except Exception:
+    if not sentences:
         return fallback_key_points(text)
+
+    key_points = []
+
+    for sentence in sentences[:5]:
+        key_points.append(f"- {sentence}")
+
+    return "\n".join(key_points)
 
 
 def generate_flashcards(summary: str) -> str:
-    generator = load_text_generator()
+    """
+    Generates 5 flashcards without AI model.
+    """
+    sentences = split_into_sentences(summary)
+    keywords = extract_keywords(summary, max_keywords=5)
 
-    prompt = f"""
-You are a study assistant.
+    if not sentences:
+        return fallback_flashcards(summary)
 
-Create exactly 5 flashcards from the text.
+    flashcards = []
 
-Use this exact format:
-Q1: question
-A1: answer
+    for i in range(min(5, len(sentences))):
+        keyword = keywords[i] if i < len(keywords) else "this concept"
 
-Q2: question
-A2: answer
-
-Q3: question
-A3: answer
-
-Q4: question
-A4: answer
-
-Q5: question
-A5: answer
-
-Rules:
-- Questions must be useful for studying.
-- Answers must be based only on the text.
-- Do not write random symbols.
-
-Text:
-{summary[:2500]}
-"""
-
-    try:
-        result = generator(
-            prompt,
-            max_new_tokens=350,
-            do_sample=False,
-            num_beams=4
+        flashcards.append(
+            f"Q{i + 1}: What should you remember about {keyword}?\n"
+            f"A{i + 1}: {sentences[i]}"
         )
 
-        output = clean_model_output(result[0]["generated_text"])
-
-        if not output or "Q" not in output or "A" not in output:
-            return fallback_flashcards(summary)
-
-        return output
-
-    except Exception:
-        return fallback_flashcards(summary)
+    return "\n\n".join(flashcards)
 
 
 def generate_quiz(summary: str) -> str:
-    generator = load_text_generator()
+    """
+    Generates 5 multiple-choice questions without AI model.
+    """
+    sentences = split_into_sentences(summary)
 
-    prompt = f"""
-You are a study assistant.
+    if not sentences:
+        return fallback_quiz(summary)
 
-Create exactly 5 multiple-choice quiz questions from the text.
+    quiz_items = []
 
-Use this exact format:
-1. Question?
-A) Option
-B) Option
-C) Option
-D) Option
-Correct answer: A
-
-Rules:
-- Each question must have 4 options.
-- Mark the correct answer.
-- Use only information from the text.
-- Do not write random symbols.
-
-Text:
-{summary[:2500]}
-"""
-
-    try:
-        result = generator(
-            prompt,
-            max_new_tokens=500,
-            do_sample=False,
-            num_beams=4
+    for i, sentence in enumerate(sentences[:5], start=1):
+        quiz_items.append(
+            f"{i}. Which statement is supported by the text?\n"
+            f"A) {sentence}\n"
+            f"B) The text says the opposite of this idea.\n"
+            f"C) The text does not provide any useful information.\n"
+            f"D) The text is only about unrelated details.\n"
+            f"Correct answer: A"
         )
 
-        output = clean_model_output(result[0]["generated_text"])
+    return "\n\n".join(quiz_items)
 
-        if not output or "Correct answer" not in output:
-            return fallback_quiz(summary)
 
-        return output
+def generate_summary(text: str, max_sentences: int = 5) -> str:
+    """
+    Optional helper function for summary generation.
+    """
+    sentences = split_into_sentences(text)
 
-    except Exception:
-        return fallback_quiz(summary)
+    if not sentences:
+        return "No summary could be generated from the provided text."
+
+    return " ".join(sentences[:max_sentences])
+
+
+# Streamlit UI
+st.title("AI Study Notes Generator")
+
+text = st.text_area("Paste your lesson text here:", height=250)
+
+if st.button("Generate Study Notes"):
+    if not text.strip():
+        st.warning("Please paste some text first.")
+    else:
+        summary = generate_summary(text)
+
+        st.subheader("Summary")
+        st.write(summary)
+
+        st.subheader("Key Points")
+        st.markdown(generate_key_points(text))
+
+        st.subheader("Flashcards")
+        st.text(generate_flashcards(summary))
+
+        st.subheader("Quiz")
+        st.text(generate_quiz(summary))
