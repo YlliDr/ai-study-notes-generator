@@ -1,21 +1,16 @@
 import streamlit as st
 
+st.set_page_config(
+    page_title="AI Study Notes Generator",
+    page_icon="📚",
+    layout="wide"
+)
+
 from src.preprocessing import clean_text, split_text
 from src.summarizer import summarize_text
 from src.generator import generate_key_points, generate_flashcards, generate_quiz
 from src.classifier import classify_topic, classify_difficulty
 from src.utils import create_download_text
-
-
-# --------------------------------------------------
-# Page Config
-# --------------------------------------------------
-st.set_page_config(
-    page_title="AI Study Notes Generator",
-    page_icon="📚",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 
 # --------------------------------------------------
