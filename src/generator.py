@@ -1,12 +1,5 @@
-import re
 import streamlit as st
 from transformers import pipeline
-
-
-MODEL_NAME = "google/flan-t5-small"
-# If your laptop is too slow, change back to:
-# MODEL_NAME = "google/flan-t5-small"
-
 
 @st.cache_resource
 def load_text_generator():
